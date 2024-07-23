@@ -1,0 +1,98 @@
+stages:
+  - pullchange
+  - setenv
+  - build-frontend
+  - build-backend
+  - build
+  - deploy
+  
+    
+pullchange-stage-job:
+  stage: pullchange
+  only:
+    - master
+  script:
+    - chmod 400 $STAGE_RSA
+    - ssh -v -tt -i $STAGE_RSA  -o StrictHostKeyChecking=no gitlab-runner@$STAGE_URL "cd apps && rm -rf council; git clone http://council:$GIT_ACCESS_TOKEN@193.227.50.50/private-universities/council.git --branch master"
+
+
+pullchange-production-job:
+  stage: pullchange
+  only:
+    - production
+  script:
+    - chmod 400 $PRODUCTION_RSA
+    - ssh -v -tt -i $PRODUCTION_RSA  -o StrictHostKeyChecking=no gitlab-runner@$PRODUCTION_URL "cd apps && rm -rf council; git clone http://council:$GIT_ACCESS_TOKEN@193.227.50.50/private-universities/council.git --branch production"
+
+setenv-stage-job:
+  stage: setenv
+  only:
+    - master
+  script:
+    - chmod 400 $STAGE_RSA
+    - ssh -v -tt -i $STAGE_RSA  -o StrictHostKeyChecking=no gitlab-runner@$STAGE_URL "cp apps/.env apps/council/backend"
+    
+
+setenv-production-job:
+  stage: setenv
+  only:
+    - production
+  script:
+    - chmod 400 $PRODUCTION_RSA
+    - ssh -v -tt -i $PRODUCTION_RSA  -o StrictHostKeyChecking=no gitlab-runner@$PRODUCTION_URL "cp apps/.env apps/council/backend"
+
+    
+build-frontend-stage-job:
+  stage: build-frontend
+  only:
+    - master
+  script:
+    - chmod 400 $STAGE_RSA
+    - ssh -v -tt -i $STAGE_RSA  -o StrictHostKeyChecking=no gitlab-runner@$STAGE_URL "cd /home/gitlab-runner/apps/council/frontend &&  npm install && npm run build"
+
+build-frontend-production-job:
+  stage: build-frontend
+  only:
+    - production
+  script:
+    - chmod 400 $PRODUCTION_RSA
+    - ssh -v -tt -i $PRODUCTION_RSA  -o StrictHostKeyChecking=no gitlab-runner@$PRODUCTION_URL "cd /home/gitlab-runner/apps/council/frontend &&  npm install && npm run build"
+
+  
+
+build-backend-stage-job:
+  stage: build-backend 
+  only:
+    - master
+  script:
+    - chmod 400 $STAGE_RSA
+    - ssh -v -tt -i $STAGE_RSA  -o StrictHostKeyChecking=no gitlab-runner@$STAGE_URL "cd /home/gitlab-runner/apps/council/backend && pipenv install"
+
+    
+build-backend-production-job:
+  stage: build-backend
+  only:
+    - production
+  script:
+    - chmod 400 $PRODUCTION_RSA
+    - ssh -v -tt -i $PRODUCTION_RSA  -o StrictHostKeyChecking=no gitlab-runner@$PRODUCTION_URL "cd /home/gitlab-runner/apps/council/backend && pipenv install"
+
+  
+
+deploy-stage-job:
+  stage: deploy
+  only:
+    - master
+  script:
+    - chmod 400 $STAGE_RSA
+    - ssh -v -tt -i $STAGE_RSA  -o StrictHostKeyChecking=no gitlab-runner@$STAGE_URL "cd /home/gitlab-runner/apps/council/frontend && rm -rf /var/www/html/dist && mv dist  /var/www/html/dist"
+    - ssh -v -tt -i $STAGE_RSA  -o StrictHostKeyChecking=no gitlab-runner@$STAGE_URL "cd /home/gitlab-runner/apps/council/backend && nohup pipenv run start 0:9000 >/dev/null 2>&1 &"
+
+deploy-production-job:
+  stage: deploy
+  only:
+    - production
+  script:
+    - chmod 400 $PRODUCTION_RSA
+    - ssh -v -tt -i $PRODUCTION_RSA  -o StrictHostKeyChecking=no gitlab-runner@$PRODUCTION_URL "cd /home/gitlab-runner/apps/council/frontend && rm -rf /var/www/html/dist && mv dist  /var/www/html/dist"
+    - ssh -v -tt -i $PRODUCTION_RSA  -o StrictHostKeyChecking=no gitlab-runner@$PRODUCTION_URL "cd /home/gitlab-runner/apps/council/backend && nohup pipenv run start 0:9000>/dev/null 2>&1 &"

@@ -1,0 +1,20 @@
+{
+  "configurations": [
+    {
+      "name": "Frontend: Attach Debugger",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}\\./frontend"
+    },
+    {
+      "name": "Backend: Run with Debugger",
+      "type": "python",
+      "request": "launch",
+      "program": "manage.py",
+      "args": ["runserver"],
+      "django": true,
+      "cwd": "${workspaceFolder}\\./backend"
+    }
+  ]
+}
